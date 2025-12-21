@@ -1,0 +1,17 @@
+{
+  "id": "nautilusmodLua",
+  "name": "Nautilus Mod",
+  "author": [
+    "Existantplease"
+  ],
+  "description": "A mix of inside jokes and seriousness\n(partly made with jokerforge)\nCo-developed by pixeldavel",
+  "prefix": "naut",
+  "main_file": "main.lua",
+  "version": "1.0.0",
+  "priority": 0,
+  "badge_colour": "000000",
+  "badge_text_colour": "9900ff",
+  "dependencies": [
+    "Steamodded (>=1.0.0~BETA-0827c)"
+  ]
+}
