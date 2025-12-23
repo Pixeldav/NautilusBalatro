@@ -1,4 +1,17 @@
 to_big = to_big or function(x) return x end
+create_badge(_string, _badge_col, _text_col, scaling)
+
+
+-- ok so for some reason i absolutely NEED a localization file??? -pixel
+local files = NFS.getDirectoryItems(mod_path .. "localization")
+for _, file in ipairs(files) do
+	print("[Nautilus] Loading localization file " .. file)
+	local f, err = SMODS.load_file("localization/" .. file)
+	if err then
+		error(err) 
+	end
+	f()
+end
 
 SMODS.Atlas({
     key = "modicon", 
@@ -76,6 +89,14 @@ SMODS.Rarity {
 		name = "Unique"
 	},
 	badge_colour = HEX('000066')
+}
+
+SMODS.Rarity {
+	key = "sporadic",
+	loc_txt = {
+		name = "Sporadic"
+	},
+	badge_colour = HEX('C2009D')
 }
 
 SMODS.Sound({
@@ -558,7 +579,7 @@ SMODS.Joker {
 	loc_txt = {
 		name = 'Chickadee From Hell',
 		text = {
-			"{C:mult,s:1.2}THAT DAMN BIRD THAT I HATE{}",
+			"{C:mult,s:1.2}THAT BIRD THAT I HATE{}",
 			"{s:0.9,C:inactive}+#1# Mult{}",
             "{s:0.85,C:inactive}(Appears in flocks, does not require room){}"
 		}
@@ -593,7 +614,7 @@ calculate = function(self, card, context)
 	end
     if context.joker_main then
     		return {
-			hypermult = {4, 100}
+			mult = card.ability.extra.mult
 		}
 	end
 end
@@ -806,8 +827,6 @@ SMODS.Joker{ --The Mansion
     end
 }
 
-local CrazyEyesSpawnable = false
-local CrazierEyesSpawnable = false
 
 SMODS.Joker{
     key = 'eyes',
@@ -1027,54 +1046,6 @@ SMODS.Joker{
 
 calculate = function(self, card, context)
 
-    local blueprints = SMODS.find_card('j_blueprint')
-    local eyes2 = SMODS.find_card('j_naut_eyes')
-    local eyes3 = SMODS.find_card('j_naut_crazyEyes')
-    local eyes4 = SMODS.find_card('j_naut_crazierEyes')
-
-    if not card.ability.extra.spawned and (#blueprints > 0) and #eyes2 > 0 and #eyes4 == 0 and context.joker_main then
-    card.ability.extra.spawned = true
-
-    G.E_MANAGER:add_event(Event({
-        trigger = "after",
-        delay = 0.3,
-        func = function()
-            play_sound("timpani")
-
-            local third = nil
-            for _, v in ipairs(eyes3) do
-                v:start_dissolve(nil, third)
-                third = true
-            end
-
-            local second = nil
-            for _, v in ipairs(eyes2) do
-                v:start_dissolve(nil, second)
-                second = true
-            end
-
-            local first = nil
-            for _, v in ipairs(blueprints) do
-                v:start_dissolve(nil, first)
-                first = true
-            end
-
-
-            local eyes = create_card(
-                'Joker', G.jokers, nil, nil, nil, nil,
-                'j_naut_crazierEyes', nil
-            )
-            for i = 0, 0 do
-              G.jokers:emplace(eyes)
-              eyes:set_edition({negative = true}, false, false)
-              eyes:add_to_deck()
-            end
-
-            return true
-        end
-    }))
-end
-
 local current_index
 
 for i = 1, #G.jokers.cards do
@@ -1257,6 +1228,244 @@ SMODS.Joker{
         end
     end
 }
+
+SMODS.Joker{
+    key = 'unity',
+    loc_txt= {
+        name = 'Unity',
+        text = { "{s:2,C:dark_edition}???{}",}
+    },
+    atlas = 'CustomJokers',
+    rarity = "naut_damn",
+    cost = 100,
+    config = { extra = {spawned = false}},
+    pools = {["NautilusAdd"] = true},
+
+    
+    unlocked = true,
+    discovered = true,
+    blueprint_compat = false,
+    eternal_compat = true,
+    perishable_compat = true,
+
+    pos = {x=6, y= 1},
+
+calculate = function(self, card, context)
+
+if context.joker_main then
+	error("Use a good game engine, stupid")
+end
+
+
+end
+
+
+
+
+
+
+}
+
+SMODS.Joker{
+    key = 'theHole',
+    loc_txt= {
+        name = 'Hole',
+        text = { "{X:chips,C:white}+#2#X{} chips for each card destroyed",
+                "{C:mult}Self-destructs{} when {X:chips,C:white}2X{} chips are reached",
+            "{C:inactive}Currently{} {X:chips,C:white}+#1#X{} {C:inactive}chips{} "}
+    },
+    atlas = 'CustomJokers',
+    rarity = 2,
+    cost = 6,
+    config = { extra = { xchips1 = 1, xchipsgain = 0.1} },
+    pools = {["NautilusAdd"] = true},
+	loc_vars = function(self, info_queue, card)
+		return { vars = { to_big(card.ability.extra.xchips1), to_big(card.ability.extra.xchipsgain) } }
+	end,
+
+    
+    unlocked = true,
+    discovered = true,
+    blueprint_compat = true,
+    eternal_compat = true,
+    perishable_compat = true,
+
+    pos = {x=20, y=0},
+
+calculate = function(self, card, context)
+
+if context.removed then
+    card.ability.extra.xchips1 = card.ability.extra.xchips1 + (card.ability.extra.xchipsgain * #context.removed)
+end
+if context.joker_main then
+    if to_big(card.ability.extra.xchips1) >= to_big(2) then
+        card:destroy()
+    end
+			return {
+				Xchip_mod = to_big(card.ability.extra.xchips1),
+			}
+
+
+end
+end,
+}
+
+-- CROSS-MOD!!! ################################################################################################################################
+
+SMODS.Joker{
+    key = 'exoticEyes',
+    loc_txt= {
+        name = 'Photocular',
+        text = { "Retriggers the Joker to",
+                    "its left and right",
+                    "for every {C:attention}Copy/Blueprint",
+                    "{C:attention}/Joker Retrigger{} Joker",
+                    "{s:0.85,C:inactive}somewhat buggy. oh well{}"}
+    },
+    atlas = 'CustomJokers',
+    rarity = "cry_exotic",
+    cost = 8,
+    config = { extra = {spawned = false, spawned2 = false}},
+    pools = {["NautilusAdd"] = true},
+    dependencies = {"Cryptid"},
+
+    
+	loc_vars = function(self, info_queue, card)
+		info_queue[#info_queue + 1] = {key = "naut_EEyesInfoQ", set = "Other"}
+	end,
+
+    
+    unlocked = true,
+    discovered = true,
+    blueprint_compat = true,
+    eternal_compat = true,
+    perishable_compat = true,
+
+    pos = {x=18, y= 1},
+    soul_pos = {x=19, y=1, extra = {x=20, y=1}},
+
+calculate = function(self, card, context)
+	local current_index
+	for i = 1, #G.jokers.cards do
+		if G.jokers.cards[i] == card then
+			current_index = i
+			break
+		end
+	end
+
+	local blueprints   = SMODS.find_card('j_blueprint')
+	local bstorms      = SMODS.find_card('j_brainstorm')
+	local canvas       = SMODS.find_card('j_cry_canvas')
+	local boredoms     = SMODS.find_card('j_cry_boredom')
+	local wees         = SMODS.find_card('j_cry_weegaming')
+	local nosounds     = SMODS.find_card('j_cry_nosound')
+	local chads        = SMODS.find_card('j_cry_chad')
+	local flips        = SMODS.find_card('j_cry_flipside')
+	local loopies      = SMODS.find_card('j_cry_loopy')
+	local oldbprints   = SMODS.find_card('j_cry_oldblueprint')
+	local specgrams    = SMODS.find_card('j_cry_spectrogram')
+
+	if context.retrigger_joker_check and not context.retrigger_joker then
+		local am_target = false
+
+		if context.other_card and context.other_card == card then
+			am_target = true
+		end
+		if context.triggering_card and context.triggering_card == card then
+			am_target = true
+		end
+		if context.retrigger_target and context.retrigger_target == card then
+			am_target = true
+		end
+
+		if not am_target and context.retrigger_origin_x and card.T then
+			local eps = 1e-6
+			if math.abs(card.T.x - context.retrigger_origin_x) < eps then
+				am_target = true
+			end
+		end
+
+		if am_target then
+			local num_retriggers = #blueprints + #bstorms + #boredoms + #wees + #nosounds + #canvas + #flips + #chads + #loopies + #oldbprints + #specgrams - 1
+			if num_retriggers <= 0 then
+				num_retriggers = 1
+			end
+
+			return {
+				message = localize("k_again_ex"),
+				repetitions = num_retriggers,
+				card = card,
+			}
+		end
+	end
+
+	local left_ret = nil
+	local right_ret = nil
+	if current_index and current_index > 1 then
+		left_ret = SMODS.blueprint_effect(card, G.jokers.cards[current_index - 1], context)
+	end
+	if current_index and current_index < #G.jokers.cards then
+		right_ret = SMODS.blueprint_effect(card, G.jokers.cards[current_index + 1], context)
+	end
+
+	return SMODS.merge_effects { left_ret or {}, right_ret or {} }
+end
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
