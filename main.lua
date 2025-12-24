@@ -3,14 +3,9 @@ create_badge(_string, _badge_col, _text_col, scaling)
 
 
 -- ok so for some reason i absolutely NEED a localization file??? -pixel
-local files = NFS.getDirectoryItems(mod_path .. "localization")
-for _, file in ipairs(files) do
-	print("[Nautilus] Loading localization file " .. file)
-	local f, err = SMODS.load_file("localization/" .. file)
-	if err then
-		error(err) 
-	end
-	f()
+local jokers_src = NFS.getDirectoryItems(SMODS.current_mod.path .. "localization")
+for _, file in ipairs(jokers_src) do
+    assert(SMODS.load_file("localization/" .. file))()
 end
 
 SMODS.Atlas({
